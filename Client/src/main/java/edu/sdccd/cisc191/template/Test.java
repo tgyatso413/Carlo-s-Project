@@ -77,10 +77,10 @@ class NumberGuessingGameTest {
         Node head = game.generateSecretNumberList(10);
 
         // Assuming 'containsValue' is the method that searches the linked list.
-        boolean found = game.containsValue(head, 10);
+        boolean found = game.notifyAll(head, 10);
         assertTrue(found);
 
-        found = game.containsValue(head, 999);
+        found = game.notifyAll(head, 999);
         assertFalse(found);
     }
 

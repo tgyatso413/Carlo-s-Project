@@ -1,9 +1,7 @@
 package edu.sdccd.cisc191.template;
 
-import java.awt.*;
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.util.*;
 
 /**
@@ -65,6 +63,7 @@ class User {
      * In a real application, this would send data to a server.
      */
     public void sendMessageToServer() {
+        // Simulate sending user data to a server (network communication)
         System.out.println("Sending user data to server: " + this);
     }
 
@@ -81,6 +80,22 @@ public class NumberGuessingGame {
 
     Map<String, User> userMap = new HashMap<>();
     private ArrayList<Integer> highScores = new ArrayList<>();
+
+    // Network communication
+    private Socket socket;
+    private PrintWriter writer;
+    private BufferedReader reader;
+
+    public NumberGuessingGame() {
+        try {
+            // Establish a connection to the server
+            socket = new Socket("localhost", 3000);
+            writer = new PrintWriter(socket.getOutputStream(), true);
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
         NumberGuessingGame game = new NumberGuessingGame();
@@ -123,7 +138,7 @@ public class NumberGuessingGame {
                 User user = new User(playerName, attempts);
                 userMap.put(user.getName(), user);
 
-                // Simulate sending user data to server
+                // Simulate sending user data to server (network communication)
                 user.sendMessageToServer();
 
                 System.out.print("Play again? (yes/no): ");
@@ -189,27 +204,18 @@ public class NumberGuessingGame {
         }
     }
 
-    /**
-     * Opens a web page with the winning number.
-     *
-     * @param winningNumber The winning number.
-     */
-    static void openWebPageWithWinningNumber(int winningNumber) {
+    public boolean notifyAll(Node head, int i) {
+        return false;
+    }
+
+    // Close the socket and resources when the game ends
+    public void closeSocket() {
         try {
-            Desktop.getDesktop().browse(new URI("https://example.com/winning-number?number=" + winningNumber)); // Replace with the actual URL
-        } catch (IOException | URISyntaxException e) {
+            writer.close();
+            reader.close();
+            socket.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    public boolean containsValue(Node head, int value) {
-        if (head == null) {
-            return false; // Reached the end of the list
-        }
-        if (head.value == value) {
-            return true; // Value found
-        }
-        return containsValue(head.next, value); // Recursive call with the next node
-    }
 }
-
