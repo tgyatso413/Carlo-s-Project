@@ -18,7 +18,6 @@ public class NumberGuessingGameServer {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress());
 
-                // Create a new thread to handle client communication
                 Thread clientThread = new Thread(() -> handleClient(clientSocket));
                 clientThread.start();
             }
@@ -29,33 +28,48 @@ public class NumberGuessingGameServer {
 
     private static void handleClient(Socket clientSocket) {
         try (
-                InputStream inputStream = clientSocket.getInputStream();
-                OutputStream outputStream = clientSocket.getOutputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                PrintWriter writer = new PrintWriter(outputStream, true)
+                ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
         ) {
-            String clientMessage;
+            Message message = (Message) objectInputStream.readObject();
 
-            // Read messages from the client
-            while ((clientMessage = reader.readLine()) != null) {
-                System.out.println("Received from client: " + clientMessage);
-
-                // Check if the client message is a high score update
-                if (clientMessage.startsWith("HighScore:")) {
-                    int score = Integer.parseInt(clientMessage.substring(11));
-                    highScores.add(score);
-                    Collections.sort(highScores); // Sort high scores
-                    writer.println("High score updated.");
-                } else {
-                    // Handle other types of messages if needed
-                    writer.println("Server received: " + clientMessage);
-                }
+            if ("HighScore".equals(message.getType())) {
+                int score = Integer.parseInt(message.getContent());
+                highScores.add(score);
+                Collections.sort(highScores);
+                objectOutputStream.writeObject(new Message("Response", "High score updated."));
+            } else {
+                objectOutputStream.writeObject(new Message("Response", "Received: " + message.getContent()));
             }
-
-            // Close the client socket when done
-            clientSocket.close();
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
+
+    static class Message implements Serializable {
+        private String type;
+        private String content;
+
+        public Message(String type, String content) {
+            this.type = type;
+            this.content = content;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        @Override
+        public String toString() {
+            return "Message{" +
+                    "type='" + type + '\'' +
+                    ", content='" + content + '\'' +
+                    '}';
+        }
+    }
 }
+

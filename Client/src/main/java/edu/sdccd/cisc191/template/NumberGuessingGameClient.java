@@ -2,57 +2,75 @@ package edu.sdccd.cisc191.template;
 
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Collections;
 
-class NumberGuessingGameClient {
+public class NumberGuessingGameClient {
+    private static ArrayList<Integer> highScores = new ArrayList<>();
+
     public static void main(String[] args) {
-        String serverAddress = "localhost"; // Change to the server's IP address or hostname
-        int serverPort = 3000;
+        int port = 3000;
 
-        try (Socket socket = new Socket(serverAddress, serverPort);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-             Scanner scanner = new Scanner(System.in)) {
-
-            System.out.println("Connected to the server.");
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Server is listening on port " + port);
 
             while (true) {
-                System.out.println("1. Play the game");
-                System.out.println("2. Get High Scores");
-                System.out.println("3. Exit");
-                System.out.print("Choose an option: ");
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Client connected: " + clientSocket.getInetAddress());
 
-                // Add error handling for non-integer input
-                int choice;
-                try {
-                    choice = scanner.nextInt();
-                } catch (java.util.InputMismatchException e) {
-                    System.out.println("Invalid input. Please enter a valid integer.");
-                    scanner.nextLine(); // Consume the invalid input
-                    continue; // Continue the loop to prompt for input again
-                }
-
-                if (choice == 1) {
-                    // Play the game logic here
-                    System.out.println("Playing the game...");
-                    // When a player achieves a high score, send it to the server
-                    int highScore = 42; // Replace with the actual high score
-                    writer.println("HighScore:" + highScore);
-                    System.out.println("High score sent to the server.");
-                } else if (choice == 2) {
-                    // Request high scores from the server
-                    writer.println("GetHighScores");
-                    String response = reader.readLine();
-                    System.out.println("High Scores: " + response);
-                } else if (choice == 3) {
-                    System.out.println("Exiting the game.");
-                    break;
-                } else {
-                    System.out.println("Invalid choice. Please choose a valid option.");
-                }
+                Thread clientThread = new Thread(() -> handleClient(clientSocket));
+                clientThread.start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    private static void handleClient(Socket clientSocket) {
+        try (
+                ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+        ) {
+            Message message = (Message) objectInputStream.readObject();
+
+            if ("HighScore".equals(message.getType())) {
+                int score = Integer.parseInt(message.getContent());
+                highScores.add(score);
+                Collections.sort(highScores);
+                objectOutputStream.writeObject(new Message("Response", "High score updated."));
+            } else {
+                objectOutputStream.writeObject(new Message("Response", "Received: " + message.getContent()));
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static class Message implements Serializable {
+        private String type;
+        private String content;
+
+        public Message(String type, String content) {
+            this.type = type;
+            this.content = content;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        @Override
+        public String toString() {
+            return "Message{" +
+                    "type='" + type + '\'' +
+                    ", content='" + content + '\'' +
+                    '}';
+        }
+    }
 }
+
+

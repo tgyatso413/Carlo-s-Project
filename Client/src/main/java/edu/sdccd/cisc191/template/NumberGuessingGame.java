@@ -4,66 +4,54 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-/**
- * This class represents a Number Guessing Game.
- */
 class Node {
     int value;
     Node next;
 
-    /**
-     * Creates a new Node with the given value.
-     *
-     * @param value The value of the node.
-     */
     public Node(int value) {
         this.value = value;
         this.next = null;
     }
+
+    public void printNodesRecursively() {
+        System.out.print(this.value + " ");
+        if (this.next != null) {
+            this.next.printNodesRecursively();
+        }
+    }
+
+    public boolean search(int target) {
+        Node current = this;
+        while (current != null) {
+            if (current.value == target) {
+                return true;
+            }
+            current = current.next;
+        }
+        return false;
+    }
 }
 
-/**
- * This class represents a User in the game.
- */
 class User {
     private String name;
     private int score;
 
-    /**
-     * Creates a new User with the given name and score.
-     *
-     * @param name  The name of the user.
-     * @param score The score of the user.
-     */
     public User(String name, int score) {
         this.name = name;
         this.score = score;
     }
 
-    /**
-     * Gets the name of the user.
-     *
-     * @return The name of the user.
-     */
     public String getName() {
         return name;
     }
 
-    /**
-     * Gets the score of the user.
-     *
-     * @return The score of the user.
-     */
     public int getScore() {
         return score;
     }
 
-    /**
-     * Simulated network communication method.
-     * In a real application, this would send data to a server.
-     */
     public void sendMessageToServer() {
-        // Simulate sending user data to a server (network communication)
+        // Adjust this method to actually send data to the server
+        // For now, it just prints a message
         System.out.println("Sending user data to server: " + this);
     }
 
@@ -71,24 +59,42 @@ class User {
     public String toString() {
         return "User{name='" + name + "', score=" + score + '}';
     }
+    public class Message implements Serializable {
+        private String type;
+        private String content;
+
+        public Message(String type, String content) {
+            this.type = type;
+            this.content = content;
+        }
+
+        // Standard getters and setters
+        public String getType() { return type; }
+        public String getContent() { return content; }
+        public void setType(String type) { this.type = type; }
+        public void setContent(String content) { this.content = content; }
+
+        @Override
+        public String toString() {
+            return "Message{" +
+                    "type='" + type + '\'' +
+                    ", content='" + content + '\'' +
+                    '}';
+        }
+    }
 }
 
-/**
- * The main class for the Number Guessing Game.
- */
 public class NumberGuessingGame {
 
     Map<String, User> userMap = new HashMap<>();
     private ArrayList<Integer> highScores = new ArrayList<>();
 
-    // Network communication
     private Socket socket;
     private PrintWriter writer;
     private BufferedReader reader;
 
     public NumberGuessingGame() {
         try {
-            // Establish a connection to the server
             socket = new Socket("localhost", 3000);
             writer = new PrintWriter(socket.getOutputStream(), true);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -101,6 +107,7 @@ public class NumberGuessingGame {
         NumberGuessingGame game = new NumberGuessingGame();
         game.startGame();
     }
+
 
     public void startGame() {
         Scanner scanner = new Scanner(System.in);
@@ -174,6 +181,7 @@ public class NumberGuessingGame {
             current = newNode;
         }
 
+        head.printNodesRecursively(); // Print the list recursively
         return head;
     }
 
@@ -203,17 +211,25 @@ public class NumberGuessingGame {
             e.printStackTrace();
         }
     }
-
-    public boolean notifyAll(Node head, int i) {
-        return false;
+    public static void bubbleSortHighScores(ArrayList<Integer> scores) {
+        int n = scores.size();
+        for (int i = 0; i < n-1; i++) {
+            for (int j = 0; j < n-i-1; j++) {
+                if (scores.get(j) > scores.get(j+1)) {
+                    Integer temp = scores.get(j);
+                    scores.set(j, scores.get(j+1));
+                    scores.set(j+1, temp);
+                }
+            }
+        }
     }
 
     // Close the socket and resources when the game ends
     public void closeSocket() {
         try {
-            writer.close();
-            reader.close();
-            socket.close();
+            if (writer != null) writer.close();
+            if (reader != null) reader.close();
+            if (socket != null) socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
