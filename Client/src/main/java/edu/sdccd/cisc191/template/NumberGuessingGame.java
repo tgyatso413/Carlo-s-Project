@@ -13,12 +13,20 @@ class Node {
         this.next = null;
     }
 
+    /**
+     * Prints potential secret number values recursively before the game starts.
+     */
     public void printNodesRecursively() {
         System.out.print(this.value + " ");
         if (this.next != null) {
             this.next.printNodesRecursively();
         }
+        // TEDDY: Print a newline after the list of values.
+        else {
+            System.out.print('\n');
+        }
     }
+
 
     public boolean search(int target) {
         Node current = this;
